@@ -13,7 +13,7 @@ class Customer(models.Model):
     
 class Product(models.Model):
     name = models.CharField(max_length=200, null=True)
-    price = models.FloatField()
+    price = models.DecimalField(max_digits=7, decimal_places=2)
     digital = models.BooleanField(default=False, null=True, blank=False)
     image = models.ImageField(null=True, blank=True)
 
@@ -39,16 +39,27 @@ class Order(models.Model):
         return str(self.id)
     
     @property
-    def get_cart_total(self):
-        orderitems = self.orderitem_set.all()
-        total = sum([item.quantity for item in orderitems])
-        return total
+    def shipping(self):
+        shipping = False #if nothing is done shipping is always going to be false
+        orderitems = self.orderitem_set.all()# retrieves all related orderitems objects for this order
+        for i in orderitems:# loop through each orderitem
+            if i.product.digital == False:
+                shipping = True
+        return shipping
+
+
     
     @property
     def get_cart_items(self):
-        orderitems = self.orderitem_set.all()
-        total = sum([item.get_total for item in orderitems])
+        orderitems = self.orderitem_set.all()# retrieves all related orderitem objects for this order
+        total = sum([item.quantity for item in orderitems])# sums up the quantity of each orderItem in the order
         return total
+    
+    @property
+    def get_cart_total(self):
+        orderitems = self.orderitem_set.all()# retrieves all related orderItem objects in that order
+        total = sum([item.get_total for item in orderitems])# sums up the total cost of each orderItem, get_total is a method that calculates the total cost of one orderItem
+        return total #rreturns the calculated total cost
     
     
 class OrderItem(models.Model):

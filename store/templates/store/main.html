@@ -12,12 +12,19 @@
 
     <link rel="stylesheet" type="text/css" href="{% static 'css/main.css' %}">
 
+    <script type="text/javascript">
+        //var user = '{{ request.user|default_if_none:"AnonymousUser" }}';
+        var user = '{{ request.user }}';
+        console.log('User in template:', user);
+
+        
+    </script>
     
 </head>
 <body>
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <a class="navbar-brand" href="{% url 'store' %}">Ecom</a>
+        <a class="navbar-brand" href="{% url 'store' %}"><strong>Rosasi E-Commerce</strong></a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
             aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -29,27 +36,43 @@
                     <a class="nav-link" href="{% url 'store' %}">Store <span class="sr-only"></span></a>
                 </li>
             </ul>
-            <div class="form-inline my-2 my-lg-0 ml-auto">
-                <a href="#" class="btn btn-warning">Login</a>
+            <div class="form-inline my-2 my-lg-0 ml-auto" style="margin-left: 1100px;">
+                <a href="{% url 'login' %}" class="btn btn-warning" id="loginBtn">Login</a>
+                <a href="{% url 'logout' %}" class="btn btn-warning" id="logoutBtn">Logout</a>
                 <a href="{% url 'cart' %}">
                     <img id="cart-icon" src="{% static 'images/cart.jpg' %}">
                 </a>
-                <p id="cart-total">0</p>
+                <p id="cart-total">{{cartItems}}</p>
             </div>
         </div>
     </nav>
 
     <div class="container">
         {% block content %}
-
+            {% if messages  %}
+                {% for message in messages %}
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
         {% endblock %}
     </div>
 
-    <script type="text/javascript">
-        var user = '{{ request.user|default_if_none:"AnonymousUser" }}';
-        console.log('User in template:', user);
+    <script>
+        if (user == 'AnonymousUser') {
+                document.getElementById('loginBtn').classList.remove('hidden')
+                document.getElementById('logoutBtn').classList.add('hidden')
+            }
+        else {
+            document.getElementById('loginBtn').classList.add('hidden')
+        }
+    </script>
 
-        function getCookie(name) {
+        <!--// Function to get the CSRF token from the cookie
+
+        /*function getCookie(name) {
             var cookieValue = null;
             if (document.cookie && document.cookie !== '') {
                 var cookies = document.cookie.split(';');
@@ -64,8 +87,8 @@
             }
             return cookieValue;
         }
-        var csrftoken = getCookie('csrftoken');
-    </script>
+        var csrftoken = getCookie('csrftoken');*/-->
+    
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
