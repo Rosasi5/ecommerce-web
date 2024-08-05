@@ -5,6 +5,7 @@ import json
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 import datetime
+from .utils import cookieCart, cartData, guestOrder
 
 
 # Create your views here.
@@ -34,25 +35,14 @@ def logout_user(request):
 
 def store(request):
 
-    if request.user.is_authenticated:  # check if the current user is authenticated
-        try:
-            customer = request.user.customer
-            order, created = Order.objects.get_or_create(customer=customer, complete=False)
-            items = order.orderitem_set.all()
-            cartItems = order.get_cart_items
-        except Customer.DoesNotExist:
-            items = []
-            order = {'get_cart_total': 0, 'get_cart_items': 0}
-            cartItems = order['get_cart_items']
-            print("Customer does not exist for the authenticated user.")
-    else:
-        items = []
-        order = {'get_cart_total': 0, 'get_cart_items': 0, 'shipping': False}
-        cartItems = order['get_cart_items']
+    
+    data = cookieCart(request)
+    cartItems = data['cartItems']
 
+    
     products = Product.objects.all()
-    # context dictionary for passing in data dynamically
-    context = {
+    
+    context = {  # context dictionary for passing in data dynamically
         'products': products,
         'user': request.user,
         'cartItems': cartItems,
@@ -61,27 +51,11 @@ def store(request):
 
 
 def cart(request):
-    if request.user.is_authenticated:  # check if the current user is authenticated
-        try:
-            # gets the customer object associated with the current logged-in user assuming there is a one-to-one relationship
-            customer = request.user.customer
-            # attempts to get an existing order object for the customer which is not complete and if no such order exists, it creates a new one
-            order, created = Order.objects.get_or_create(
-                customer=customer, complete=False)
-            # retrieve all orderitems associated with an order
-            items = order.orderitem_set.all()
-            # orderitem_set - allows access to related 'orderItem' objects
-            cartItems = order.get_cart_items
-        except Customer.DoesNotExist:
-            items = []
-            order = {'get_cart_total': 0, 'get_cart_items': 0}
-            cartItems = order['get_cart_items']
-            print("Customer does not exist for the authenticated user.")
-    else:
-        items = []
-        order = {'get_cart_total': 0, 'get_cart_items': 0, 'shipping': False}
-        cartItems = order['get_cart_items']
-        print("User is not authenticated")
+    
+    data = cookieCart(request)
+    cartItems = data['cartItems']
+    order = data['order']
+    items = data['items']
 
     context = {
         'items': items,
@@ -93,24 +67,12 @@ def cart(request):
 
 
 def checkout(request):
-    if request.user.is_authenticated:  # check if the current user is authenticated
-        try:
-            # gets the customer object associated with the current logged-in user assuming there is a one-to-one relationship
-            customer = request.user.customer
-            # attempts to get an existing order object for the customer which is not complete and if no such order exists, it creates a new one
-            order, created = Order.objects.get_or_create(customer=customer, complete=False)# retrieve all orderitems associated with an order
-            items = order.orderitem_set.all()# orderitem_set - allows access to related 'orderItem' objects
-            cartItems = order.get_cart_items
-        except Customer.DoesNotExist:
-            items = []
-            order = {'get_cart_total': 0, 'get_cart_items': 0}
-            cartItems = order['get_cart_items']
-            print("Customer does not exist for the authenticated user.")
-    else:
-        items = []
-        order = {'get_cart_total': 0, 'get_cart_items': 0, 'shipping': False}
-        cartItems = order['get_cart_items']
-        print("User is not authenticated")
+    
+    data = cookieCart(request)
+    cartItems = data['cartItems']
+    order = data['order']
+    items = data['items']
+
 
     context = {
         'items': items,
@@ -156,27 +118,31 @@ def processOrder(request):
     if request.user.is_authenticated:
         customer = request.user.customer # get the customer
         order, created = Order.objects.get_or_create(customer=customer, complete=False) #get the order associated with the authenticated customer or create if not found
-        total = float(data['form']['total'])
-        order.transaction_id = transaction_id
-
-        #check if the total is the same as the cart_total
-        if total == float(order.get_cart_total):
-            order.complete = True
-        order.save()
+        
 
         # check if shipping is true and set the data in the database
-        if order.shipping== True:
-            ShippingAddress.objects.create(
-                customer=customer,
-                order=order,
-                address = data['Shipping']['address'],
-                city=data['Shipping']['city'],
-                state=data['Shipping']['state'],
-                zipcode=data['Shipping']['zipcode'],
-            )
+        
 
     else:
-        print('User is not logged in...')
+        customer, order = guestOrder(request, data)
+
+    total = float(data['form']['total'])
+    order.transaction_id = transaction_id
+
+       # check if the total is the same as the cart_total
+    if total == float(order.get_cart_total):
+            order.complete = True
+    order.save()
+
+    if order.shipping == True:
+        ShippingAddress.objects.create(
+            customer=customer,
+            order=order,
+            address=data['Shipping']['address'],
+            city=data['Shipping']['city'],
+            state=data['Shipping']['state'],
+            zipcode=data['Shipping']['zipcode'],
+        )
 
     #print('Data:', request.body)
     return JsonResponse('Payment complete....', safe=False)

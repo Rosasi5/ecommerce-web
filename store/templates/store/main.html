@@ -68,6 +68,35 @@
         else {
             document.getElementById('loginBtn').classList.add('hidden')
         }
+
+
+        // function that retrieves the value of a cookie with a specified name
+            function getCookie(name) {
+                // split cookie string and get all individual name = value pairs in an array
+                var cookieArr = document.cookie.split(";");
+
+                // loop through the array elements
+                for (var i = 0; i < cookieArr.length; i++) {
+                    var cookiePair = cookieArr[i].split("=");
+
+                    //removing whitespace at the beginning of the cookie name and compare it with the given string
+                    if (name == cookiePair[0].trim()) {
+                        // Decode the cookie value and return
+                        return decodeURIComponent(cookiePair[1]);
+                    }
+                }
+                // return null if not found any cookie with the specified name
+                return null;
+            }
+
+            var cart = JSON.parse(getCookie('cart')) // converts the JSON sting value of the cookie to a javascript object
+            if (cart == undefined) {
+                cart = {}
+                console.log('Cart was created...')
+                document.cookie = 'cart=' + JSON.stringify(cart) + ";domain=;path=/"// create cookie for every single page
+            }
+
+            console.log('Cart:', cart)
     </script>
 
         <!--// Function to get the CSRF token from the cookie

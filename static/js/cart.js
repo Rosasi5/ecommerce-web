@@ -12,12 +12,37 @@ for (i = 0; i < updateBtns.length; i++) {
         console.log('USER:', user)
 
         if (user === 'AnonymousUser') {
-            console.log('Not logged in...')
+            addCookieItem(productId, action)
             
         }else { // call the function to update user order if the user is logged in
             updateUserOrder(productId, action)
         }
     })
+}
+
+
+function addCookieItem(productId, action) {
+    console.log('Not logged in.....');
+
+    if (action == 'add') {
+        if (cart[productId] == undefined) {
+            cart[productId] = {'quantity': 1}
+        }else {
+            cart[productId]['quantity'] += 1
+        }
+    }
+
+    if (action == 'remove') {
+        cart[productId]['quantity'] -= 1
+
+        if (cart[productId]['quantity'] <= 0) {
+            console.log('Remmove Item');
+            delete cart[productId];
+        }
+    }
+    console.log('Cart:', cart);
+    document.cookie = 'cart=' + JSON.stringify(cart) + ";domain=;path=/" // set the cookies to that domain
+    location.reload()
 }
 
 // function to update user order
